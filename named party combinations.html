@@ -1,0 +1,3913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Darkest Dungeon 2 Party Combination Finder</title>
+
+  <style>
+
+    body {
+      margin: 0;
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
+    }
+
+    .page {
+      padding: 10px 40px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 5px 0 15px;
+    }
+
+    select {
+      margin: 5px;
+      padding: 5px;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+    }
+	
+
+    #controls {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slot.master {
+      margin-left: 24px;
+      padding-left: 16px;
+      border-left: 1px solid #333;
+    }
+
+    .slot::before {
+      content: attr(data-rank);
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+
+    .comp {
+      margin: 10px 0;
+      padding: 10px;
+      background: #1b1b1b;
+      border-left: 4px solid #aa4444;
+    }
+	
+	.comp-content {
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center; /* THIS is the key */
+	  gap: 16px;
+	}
+
+	.comp-left {
+	  display: flex;
+	  flex-direction: column;
+	}
+
+    .comp-name {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .comp-heroes {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-icon {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      image-rendering: crisp-edges;
+    }
+
+	.comp-note {
+	  max-width: 40%;
+	  font-size: 0.9rem;
+	  color: #bbb;
+	}
+
+
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>Darkest Dungeon 2 – Named Party Combinations</h1>
+
+    <div id="controls">
+      <div class="slot" data-rank="Rank 4">
+        <select class="hero-select"></select>
+        <label>
+          <input type="checkbox" class="lock-checkbox">
+          Lock position
+        </label>
+      </div>
+
+      <div class="slot" data-rank="Rank 3">
+        <select class="hero-select"></select>
+        <label>
+          <input type="checkbox" class="lock-checkbox">
+          Lock position
+        </label>
+      </div>
+
+      <div class="slot" data-rank="Rank 2">
+        <select class="hero-select"></select>
+        <label>
+          <input type="checkbox" class="lock-checkbox">
+          Lock position
+        </label>
+      </div>
+
+      <div class="slot" data-rank="Rank 1">
+        <select class="hero-select"></select>
+        <label>
+          <input type="checkbox" class="lock-checkbox">
+          Lock position
+        </label>
+      </div>
+
+      <div class="slot master">
+        <label>
+          <input type="checkbox" id="lock-all">
+          Lock all positions
+        </label>
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    
+
+    const heroes = [
+      "Abomination",
+      "Bounty Hunter",
+      "Crusader",
+      "Duelist",
+      "Flagellant",
+      "Grave Robber",
+      "Hellion",
+      "Highwayman",
+      "Jester",
+      "Leper",
+      "Man-at-Arms",
+      "Occultist",
+      "Plague Doctor",
+      "Runaway",
+      "Vestal"
+    ];
+
+    const heroImages = {
+      "Abomination": "heroes/abomination.png",
+      "Bounty Hunter": "heroes/bounty_hunter.png",
+      "Crusader": "heroes/crusader.png",
+      "Duelist": "heroes/duelist.png",
+      "Flagellant": "heroes/flagellant.png",
+      "Grave Robber": "heroes/grave_robber.png",
+      "Hellion": "heroes/hellion.png",
+      "Highwayman": "heroes/highwayman.png",
+      "Jester": "heroes/jester.png",
+      "Leper": "heroes/leper.png",
+      "Man-at-Arms": "heroes/man_at_arms.png",
+      "Occultist": "heroes/occultist.png",
+      "Plague Doctor": "heroes/plague_doctor.png",
+      "Runaway": "heroes/runaway.png",
+      "Vestal": "heroes/vestal.png"
+    };
+
+    const teamComps = [
+     
+  {
+    "name": "The Unusual Suspects",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "The most basic roster that many will form to start, named similar to the starting four heros team name from DD1, \"The Usual Suspects\" to honor them most likely."
+  },
+  {
+    "name": "Knowledge Highway",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Man-at-Arms",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Shuffle",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Grave Robber",
+      "Man-at-Arms"
+    ],
+    "note": "The Plague Doctor acts as the dealer, while the rest are cards getting shuffled around, because of their abilities."
+  },
+  {
+    "name": "Fall From Grace",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Man-at-Arms",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Highway Robbery",
+    "heroes": [
+      "Plague Doctor",
+      "Man-at-Arms",
+      "Grave Robber",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Robbed Blind",
+    "heroes": [
+      "Plague Doctor",
+      "Man-at-Arms",
+      "Highwayman",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Standard Flip",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "This references the starting 4 characters in a different lineup, which takes away one melee move from Graverobber to allow Plague Doctor to use her Melee move."
+  },
+  {
+    "name": "Point Blank Inspection",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Man-at-Arms",
+      "Highwayman"
+    ],
+    "note": "This references Point Blank Shot on the Highwayman, his first unlockable skill. The \"Inspection\" part comes from the player \"inspecting\" this new move."
+  },
+  {
+    "name": "Special Treatment",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Plague Doctor",
+      "Man-at-Arms"
+    ],
+    "note": "This likely refers to the Grave Robber's noble lineage giving her what most would assume is the safest spot in the party."
+  },
+  {
+    "name": "Crimson Cross",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Man-at-Arms",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Entrance",
+    "heroes": [
+      "Grave Robber",
+      "Man-at-Arms",
+      "Plague Doctor",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Archeologists",
+    "heroes": [
+      "Grave Robber",
+      "Man-at-Arms",
+      "Highwayman",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Backstabbers",
+    "heroes": [
+      "Highwayman",
+      "Plague Doctor",
+      "Grave Robber",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Dignitary's Escort",
+    "heroes": [
+      "Highwayman",
+      "Plague Doctor",
+      "Man-at-Arms",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Bedside Manner",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Plague Doctor",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Expedition",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Man-at-Arms",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Night Cap",
+    "heroes": [
+      "Highwayman",
+      "Man-at-Arms",
+      "Plague Doctor",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Morgue",
+    "heroes": [
+      "Highwayman",
+      "Man-at-Arms",
+      "Grave Robber",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Stick Up",
+    "heroes": [
+      "Man-at-Arms",
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Chain Of Command",
+    "heroes": [
+      "Man-at-Arms",
+      "Plague Doctor",
+      "Highwayman",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Rear Guard",
+    "heroes": [
+      "Man-at-Arms",
+      "Grave Robber",
+      "Plague Doctor",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Tomb Raiders",
+    "heroes": [
+      "Man-at-Arms",
+      "Grave Robber",
+      "Highwayman",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Magpies",
+    "heroes": [
+      "Man-at-Arms",
+      "Highwayman",
+      "Plague Doctor",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "A Grave Prognosis",
+    "heroes": [
+      "Man-at-Arms",
+      "Highwayman",
+      "Grave Robber",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Yellow Brick Road",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Hellion",
+      "Man-at-Arms"
+    ],
+    "note": "The Wizard Of Oz, with Graverobber being Dorothy, Plague Doctor as Scarecrow, Hellion as the Cowardly Lion, and Man-at-Arms as Tin Man."
+  },
+  {
+    "name": "Highway to Hell",
+    "heroes": [
+      "Hellion",
+      "Plague Doctor",
+      "Man-at-Arms",
+      "Highwayman"
+    ],
+    "note": "AC/DC's hit single from 1979."
+  },
+  {
+    "name": "Wall of Fire",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Running with the Devil",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": "This is a reference to the Van Halen song with the same name"
+  },
+  {
+    "name": "Thieves Guild",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Runaway",
+      "Highwayman"
+    ],
+    "note": "Each character is in some way unscrupulous. The Highwayman having a past of criminal activity, the Runaway pickpocketing during her first shrine of reflection, Grave Robber poisoning her husband and PD stolen a body for her research."
+  },
+  {
+    "name": "Sisters of Battle",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": "The characters are all women, a reference to Warhammer 40,000's 'Adepta Sororitas' army, formerly known as the 'Sisters of Battle.'"
+  },
+  {
+    "name": "The Defiant",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Short Arms, Deep Pockets",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Runaway",
+      "Grave Robber"
+    ],
+    "note": "The characters in this use knives, daggers or improvised weaponry, and most are considered greedy."
+  },
+  {
+    "name": "Cut and Run",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Travellers by Gaslight",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Finishing School",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Hellion",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Manu Propria",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Runaway",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Masquerade Ball",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Jester",
+      "Grave Robber"
+    ],
+    "note": "The characters in this all have some manner of facial covering, be it a mask or a hat shrouding the eyes."
+  },
+  {
+    "name": "The Lottery",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Highwayman",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Wolf on the Fold",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "False Shine",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Man-at-Arms",
+      "Runaway"
+    ],
+    "note": "This references all 4 characters being fooled by something. PD thinks her experiment would work, Jester thinks his invitation to the court was because his skill was recognized, MaA climbing the ladder of command because he thought he could be a great commander and Runaway playing with fire."
+  },
+  {
+    "name": "Hot Blooded",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": "Characters in this composition make extensive use of burn or bleed."
+  },
+  {
+    "name": "Knives",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Jester",
+      "Highwayman"
+    ],
+    "note": "Each of the characters use knives."
+  },
+  {
+    "name": "Insane Crown Posse",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Man-at-Arms",
+      "Jester"
+    ],
+    "note": "Reference to the hip hop duo Insane Clown Posse. Both ICPs have murderous clown/s."
+  },
+  {
+    "name": "The Crimson Dance",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Jester",
+      "Man-at-Arms"
+    ],
+    "note": "All characters in this wear red, and the Jester and Highwayman swap position frequently."
+  },
+  {
+    "name": "Pat Hand",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Diplomats",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Leper",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Meat Cute",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Best Medicine",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": "Referencing the phrase \"Laughter is the best medicine\". A doctor, a clown, and a sickly person are each in this party."
+  },
+  {
+    "name": "A Cut Above",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Hellion",
+      "Leper"
+    ],
+    "note": "All of these characters have held high social statuses and make use of skills where they cut."
+  },
+  {
+    "name": "The Iron Crown",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "A Bold Move",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Queue",
+    "heroes": [
+      "Highwayman",
+      "Jester",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Caveat Emptor",
+    "heroes": [
+      "Jester",
+      "Grave Robber",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Brute Squad",
+    "heroes": [
+      "Jester",
+      "Highwayman",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Prestige",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Jester",
+      "Occultist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Occlusion Culling",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Grave Robber",
+      "Occultist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Dismal Science",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Grave Robber",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Laboratory",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Night Terrors",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "A Fool's Mistake",
+    "heroes": [
+      "Runaway",
+      "Plague Doctor",
+      "Occultist",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Cause and Effect",
+    "heroes": [
+      "Runaway",
+      "Jester",
+      "Occultist",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Reverse Sear",
+    "heroes": [
+      "Runaway",
+      "Occultist",
+      "Man-at-Arms",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "If It Bleeds, It Leads",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Highwayman",
+      "Hellion"
+    ],
+    "note": "All 4 characters make use of abilities that apply bleed."
+  },
+  {
+    "name": "Death by Inches",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": "All 4 characters have some connection with killing with DoT."
+  },
+  {
+    "name": "Blood Train",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Forces of Nature",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Wyrd Science",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Runaway",
+      "Leper"
+    ],
+    "note": "Referencing the movie, or titular song from the film, \"Weird Science\"."
+  },
+  {
+    "name": "Blaze Black",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Jester",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Smoke and Mirrors",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Plague Doctor",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Fear the Reaper",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": "Referencing a famous Blue Oyster Cult song \"(Don't Fear) The Reaper\""
+  },
+  {
+    "name": "Honor Among Thieves",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Man-at-Arms",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Eye of the Beholder",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Outcasts",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Hellion",
+      "Leper"
+    ],
+    "note": "Each of the 4 characters are outcasts, though you could say that about most of the game's roster."
+  },
+  {
+    "name": "Project Runaway",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Runaway",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "By Hook or by Crook",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Runaway",
+      "Highwayman"
+    ],
+    "note": "Occultist and Runway can pull enemies, making them the Hook while the rest of the party are Crooks."
+  },
+  {
+    "name": "In The Red",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Plague Doctor",
+      "Hellion"
+    ],
+    "note": "Each of 4 characters have abilities that cause the bleed effect."
+  },
+  {
+    "name": "Devil's Due",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Grave Robber",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Whisper in a Whirlwind",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Grave Robber",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Carpenters",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blood Zenith",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Burning Rage",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Favor the Bold",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Jester",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Live on Tour",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Leper",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Mind's Eye",
+    "heroes": [
+      "Occultist",
+      "Man-at-Arms",
+      "Plague Doctor",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Defectors",
+    "heroes": [
+      "Occultist",
+      "Man-at-Arms",
+      "Grave Robber",
+      "Runaway"
+    ],
+    "note": "All 4 characters betrayed or ran away from someone or a faction."
+  },
+  {
+    "name": "Red Azimuth",
+    "heroes": [
+      "Occultist",
+      "Hellion",
+      "Plague Doctor",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Deluge",
+    "heroes": [
+      "Occultist",
+      "Hellion",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Bittersweet Symphony",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Plague Doctor",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Arms to Farewell",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "A play on \"A Farwell to Arms\", a book by Ernest Hemingway"
+  },
+  {
+    "name": "Twist and Bleed",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Jester",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The New Blood",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Jester",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Dulce est Desipere",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Leper",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Riding Shotgun",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Highwayman",
+      "Runaway"
+    ],
+    "note": "All characters have a skill to put them in higher ranks. Occultist's ability to move forward is unlocked in the Aspirant path."
+  },
+  {
+    "name": "The Meat Grinder",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Powder Keg",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Hellion",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Butcher's Circus",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Runaway",
+      "Leper"
+    ],
+    "note": "\"The Butcher's Circus\" was the name of the PvP mode from DD1."
+  },
+  {
+    "name": "Grave Dancers",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Leper",
+      "Grave Robber"
+    ],
+    "note": "The roster utilizes moving themselves or moving their foes in their skillset."
+  },
+  {
+    "name": "Blunt Force",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Leper",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Devil's Advocate",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Leper",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Death's Waltz",
+    "heroes": [
+      "Occultist",
+      "Leper",
+      "Grave Robber",
+      "Jester"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Delenda Est",
+    "heroes": [
+      "Occultist",
+      "Leper",
+      "Man-at-Arms",
+      "Plague Doctor"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Valkyries",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Vestal",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Hook, Serve, Delicious",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Vestal",
+      "Man-at-Arms"
+    ],
+    "note": "A reference to the \"Cook, Serve, Delicious!\" game franchise."
+  },
+  {
+    "name": "Conflagration",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Vestal",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Doctor / Patient",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Vestal",
+      "Leper"
+    ],
+    "note": "The party consists of 3 healers, and the sickly Leper."
+  },
+  {
+    "name": "Safe Than Sorry",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Runaway",
+      "Occultist"
+    ],
+    "note": "Each character has at least one healing ability."
+  },
+  {
+    "name": "Cultural Exchange",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Occultist",
+      "Hellion"
+    ],
+    "note": "All 4 characters are from distinctly different cultural backgrounds."
+  },
+  {
+    "name": "Triage",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Occultist",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Collection",
+    "heroes": [
+      "Grave Robber",
+      "Vestal",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "Graverobber as the Collector mini boss of the first Darkest Dungeon with its three \"heads\""
+  },
+  {
+    "name": "Guns 'n Roses",
+    "heroes": [
+      "Highwayman",
+      "Vestal",
+      "Grave Robber",
+      "Hellion"
+    ],
+    "note": "In reference to the 80s rock band by the same name. The Highwayman is the only one with a gun(s) and the rest of the party is made up of females, sometimes colloquially referred to as \"roses\"."
+  },
+  {
+    "name": "Light and Darkness",
+    "heroes": [
+      "Jester",
+      "Occultist",
+      "Vestal",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Motley",
+    "heroes": [
+      "Jester",
+      "Vestal",
+      "Plague Doctor",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Requiem",
+    "heroes": [
+      "Jester",
+      "Vestal",
+      "Man-at-Arms",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Folie Ã  Quatre",
+    "heroes": [
+      "Leper",
+      "Hellion",
+      "Vestal",
+      "Occultist"
+    ],
+    "note": "Meaning \"madness of four\" in French, this is a reference to the \"madness\" of swapping the positions of the characters in this way. Hellion and Leper are solid front liners whereas the Occultist and Vestal almost always play in the backline."
+  },
+  {
+    "name": "Divine Intervention",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Highwayman",
+      "Hellion"
+    ],
+    "note": "3 of the 4 characters have varying religious beliefs. Vestal belongs to the Church of the Light, Occultist worships a dark power from beyond, Hellion is a pagan."
+  },
+  {
+    "name": "Unlikely Tetret",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Shouting Match",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Man-at-Arms",
+      "Hellion"
+    ],
+    "note": "This is a reference to an achievement for the Butcher's Circus wherein the player must win a match by only dealing stress. Also, these heroes shout a lot."
+  },
+  {
+    "name": "Stars Above",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Runaway",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Uneasy Suspects",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "Reference to the party combo \"The Usual Suspects\" from DD1. The only difference between the two is that the Crusader is swapped out for the Man at Arms, since Crusader is not in the game at this time."
+  },
+  {
+    "name": "Sisters of Mercy",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Third Opinion",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Occultist",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Night Out",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Grave Robber",
+      "Hellion"
+    ],
+    "note": "Girl's night out."
+  },
+  {
+    "name": "Deja Vu",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": "Besides being a meta joke (this was a commonly run team in Darkest Dungeon) it is also a reference to the song by Dave Rodgers of the same name."
+  },
+  {
+    "name": "Old King's Court",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": "Leper was once a king. The other three represent servants in his court. Man-At-Arms as a general/commander, Jester as a court Jester, and Vestal as a priest/healer in the court."
+  },
+  {
+    "name": "Ghost Busters",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Hellion",
+      "Leper"
+    ],
+    "note": "A reference to the 1984 film of the same name."
+  },
+  {
+    "name": "Graveyard Shift",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Highwayman",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Iron Fortress",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Man-at-Arms",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Cadaver Caravan",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Flagellant",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Harbingers",
+    "heroes": [
+      "Highwayman",
+      "Plague Doctor",
+      "Hellion",
+      "Flagellant"
+    ],
+    "note": "Reference to the Four Horsemen of the Apocalypse. Famine, Pestilence, War and Death."
+  },
+  {
+    "name": "Haunted",
+    "heroes": [
+      "Highwayman",
+      "Flagellant",
+      "Man-at-Arms",
+      "Hellion"
+    ],
+    "note": "All characters are haunted by spectres of their past."
+  },
+  {
+    "name": "Toxin Trickery",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Runaway",
+      "Flagellant"
+    ],
+    "note": "Reference to Grave Robber's 'Toxin Trickery' skill in the first Darkest Dungeon."
+  },
+  {
+    "name": "Dying Blight",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Flagellant",
+      "Runaway"
+    ],
+    "note": "Reference to the game 'Dying Light'."
+  },
+  {
+    "name": "The Stumbling Corpse",
+    "heroes": [
+      "Jester",
+      "Man-at-Arms",
+      "Flagellant",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Rot Squad",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blight Town",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Reference to the area \"Blight Town\" in the original 'Dark Souls' game."
+  },
+  {
+    "name": "The Bell Tolls",
+    "heroes": [
+      "Grave Robber",
+      "Flagellant",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Ruthless Orchestra",
+    "heroes": [
+      "Runaway",
+      "Man-at-Arms",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Reference to the game \"Brutal Orchestra\". With Leper as Nowak, Flagellant as Borsch, Runaway as Dimitri and Man At Arms as Boyle."
+  },
+  {
+    "name": "Doctor's Orders",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Leper",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "No Regrets",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "All characters in this party don't have regrets about their actions seen in their Shrines of Reflection."
+  },
+  {
+    "name": "Rain of Blight",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Occultist",
+      "Flagellant"
+    ],
+    "note": "All characters in this party have a ranged move that can inflict blight."
+  },
+  {
+    "name": "Grave Prognosis",
+    "heroes": [
+      "Grave Robber",
+      "Occultist",
+      "Plague Doctor",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Near Death",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Hellion",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Army of Fools",
+    "heroes": [
+      "Occultist",
+      "Man-at-Arms",
+      "Flagellant",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Hunted",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Highwayman",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Biology Assignment",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "La Danse Macabre",
+    "heroes": [
+      "Occultist",
+      "Grave Robber",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Named after Camille Saint-SaÃ«ns's famous composition. All characters are either near death (Leper and Flagellant) or regularly involve themselves with the dead (Graverobber and Occultist)."
+  },
+  {
+    "name": "Borrowed Time",
+    "heroes": [
+      "Occultist",
+      "Flagellant",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Pain and Power",
+    "heroes": [
+      "Occultist",
+      "Flagellant",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Fever Dream",
+    "heroes": [
+      "Runaway",
+      "Occultist",
+      "Leper",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Crimson Court",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Reference to the 'Crimson Court' expansion for Darkest Dungeon, which is where the Flagellant was first introduced. In addition, both Occultist and Jester are able to cause bleed, while the Leper was a king, and therefore had a court."
+  },
+  {
+    "name": "Medical Breakthrough",
+    "heroes": [
+      "Plague Doctor",
+      "Hellion",
+      "Vestal",
+      "Flagellant"
+    ],
+    "note": "A medical breakthrough is a term to refer to a major development or research in medical fields and Hellion starts in a position where she can use her Breakthrough skill."
+  },
+  {
+    "name": "Rain of Sorrows",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Flagellant",
+      "Man-at-Arms"
+    ],
+    "note": "'Rain of Sorrows' was a skill the Flagellant could use in the first Darkest Dungeon. Additionally, every character in this team (besides Flagellant) has a tragic backstory."
+  },
+  {
+    "name": "Grave Discomfort",
+    "heroes": [
+      "Vestal",
+      "Occultist",
+      "Flagellant",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Rue Morgue",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Is a reference to the novel \"The Murders in the Rue Morgue\" by Edgar Allan Poe."
+  },
+  {
+    "name": "The Malady Militia",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "This group consists of two people with serious maladies and two healers/doctors."
+  },
+  {
+    "name": "Last Light",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Bitter Memories",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "Reference to the Vestal and the Jester's traumatic backstories: Vestal was tortured by a religious zealot (Flagellant), and Jester was mocked by a king and his court (Leper)."
+  },
+  {
+    "name": "Red Hook",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": "Red Hook is the name of the developer team that created Darkest Dungeon and Darkest Dungeon II."
+  },
+  {
+    "name": "The Usual Suspects",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": "Reference to the setup team many players will form the first time in the original Darkest Dungeon game."
+  },
+  {
+    "name": "Again! AGAIN!",
+    "heroes": [
+      "Jester",
+      "Plague Doctor",
+      "Duelist",
+      "Flagellant"
+    ],
+    "note": "Reference to Duelist Skill called Again! and Flagellant skill called More! MORE!"
+  },
+  {
+    "name": "The Wall",
+    "heroes": [
+      "Vestal",
+      "Man-at-Arms",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "The front three characters all have the ability to generate  and  while protecting Vestal in the back."
+  },
+  {
+    "name": "Fire and Steel",
+    "heroes": [
+      "Vestal",
+      "Duelist",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Bound Blade",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Duelist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Knives Out",
+    "heroes": [
+      "Occultist",
+      "Duelist",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Battle Line",
+    "heroes": [
+      "Duelist",
+      "Crusader",
+      "Hellion",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Tank You",
+    "heroes": [
+      "Vestal",
+      "Crusader",
+      "Man-at-Arms",
+      "Leper"
+    ],
+    "note": "The three front characters can used as tanks, while the Vestal keeps them all healed."
+  },
+  {
+    "name": "Burning Stars",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": "A reference to the Occultist's skill of the same name. The rest of this party also makes use of the Burn attribute."
+  },
+  {
+    "name": "Footwork",
+    "heroes": [
+      "Grave Robber",
+      "Crusader",
+      "Duelist",
+      "Highwayman"
+    ],
+    "note": "All four characters can move around."
+  },
+  {
+    "name": "Bladework",
+    "heroes": [
+      "Grave Robber",
+      "Duelist",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": "All four characters have blades and swords."
+  },
+  {
+    "name": "Swift Retaliation",
+    "heroes": [
+      "Plague Doctor",
+      "Highwayman",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": "Highwayman, Duelist, and Man-at-Arms can use Riposte"
+  },
+  {
+    "name": "Searing Intellect",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Crusader",
+      "Runaway"
+    ],
+    "note": "All four characters can use Burn skills."
+  },
+  {
+    "name": "The Last Crusade",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "The Last Crusade is the name of a party combo featured in Darkest Dungeon I, consisting of four Crusaders. In addition to being a reference to that combo, this group includes the Vestal, Leper, and Crusader, religious characters, and Runaway, a character with ties to religion. Notably, the Runaway, Vestal, and Crusader characters possess abilities that can cause fire effects, aligning with the historical Crusaders' reputation for burning everything in their path."
+  },
+  {
+    "name": "The Rescuers",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Duelist",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Paragon",
+    "heroes": [
+      "Crusader",
+      "Vestal",
+      "Jester",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Fan the Flames",
+    "heroes": [
+      "Plague Doctor",
+      "Crusader",
+      "Runaway",
+      "Leper"
+    ],
+    "note": "Reference to the DD1 VO bark upon upgrading the blacksmith, \"Fan the flames! Mold the metal! We are raising an army!\" The three burn heros fan the flames, and the Leper's sword acts as the molding metal."
+  },
+  {
+    "name": "The Backup",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Ivy League",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Duelist",
+      "Leper"
+    ],
+    "note": "All 4 characters are from the upper echelons of society."
+  },
+  {
+    "name": "Sweet Relief",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Man-at-Arms",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Ride the Fire",
+    "heroes": [
+      "Duelist",
+      "Grave Robber",
+      "Crusader",
+      "Jester"
+    ],
+    "note": "Reference to the Guilty Gear Xrd song of the same name, whenever the rushdown character Sol Badguy performs a Dragon Install and becomes empowered temporary. Every hero has a forward moving skill, notably the fire bearing Holy Lance."
+  },
+  {
+    "name": "Love and Hate",
+    "heroes": [
+      "Vestal",
+      "Highwayman",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "King and Court",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "A Day Off",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Duelist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Chaos and Order",
+    "heroes": [
+      "Vestal",
+      "Occultist",
+      "Crusader",
+      "Hellion"
+    ],
+    "note": "Occultist and Hellion are Chaos, while Vestal and Crusader are Order."
+  },
+  {
+    "name": "Health and Wealth",
+    "heroes": [
+      "Occultist",
+      "Crusader",
+      "Flagellant",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Backwards",
+    "heroes": [
+      "Crusader",
+      "Flagellant",
+      "Grave Robber",
+      "Vestal"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blasphemy",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Occultist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Mountain Rangers",
+    "heroes": [
+      "Man-at-Arms",
+      "Crusader",
+      "Hellion",
+      "Leper"
+    ],
+    "note": "Each hero possesses immobilize, save for Crusader requiring the Banneret path."
+  },
+  {
+    "name": "Red Tusk",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Crusader",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Culinary Dreads",
+    "heroes": [
+      "Duelist",
+      "Hellion",
+      "Occultist",
+      "Runaway"
+    ],
+    "note": "Synonymous to the popular Gordan Ramsay show Kitchen Nightmares. This implies Runaway burns the food, Occultist serves eldritch \"spaghetti\", Hellion, in DD1 canon, is a cannibal, and Duelist yelling at the poor cooking."
+  },
+  {
+    "name": "The Pointy End",
+    "heroes": [
+      "Grave Robber",
+      "Duelist",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": "All four characters have attacks where they \"stick 'em with the pointy end\", namely Lunge, Fleche, Ransack, and Holy Lance."
+  },
+  {
+    "name": "Corpse Light",
+    "heroes": [
+      "Vestal",
+      "Grave Robber",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": "A reference to the Infernal Flame of the same name. The Vestal and Crusader worship The Light, while the Flagellant is a walking corpse and the Grave Robber deals with corpses."
+  },
+  {
+    "name": "Cruel Joke",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Grave Robber",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Hearts Of Stone",
+    "heroes": [
+      "Runaway",
+      "Grave Robber",
+      "Duelist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Burn It Down",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Occultist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Dancing Blades",
+    "heroes": [
+      "Duelist",
+      "Highwayman",
+      "Grave Robber",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Take Me To Church",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Crusader",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Perfect Subjects",
+    "heroes": [
+      "Duelist",
+      "Plague Doctor",
+      "Flagellant",
+      "Man-at-Arms"
+    ],
+    "note": "Plague Doctor could be considered to have good synergy with each of the three characters."
+  },
+  {
+    "name": "Wavering Ranks",
+    "heroes": [
+      "Grave Robber",
+      "Crusader",
+      "Man-at-Arms",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Vicious Mockery",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "No Rest for the Wicked",
+    "heroes": [
+      "Crusader",
+      "Highwayman",
+      "Flagellant",
+      "Hellion"
+    ],
+    "note": "Crusader and Flagellant were rumoured dead and now currently alive and referencing Highwayman crossroads quote \"Hunted, harried... \" plus having an skill with Wicked in the name, similar to Hellion who has both Wicked and a desire to die."
+  },
+  {
+    "name": "Grand Opening",
+    "heroes": [
+      "Duelist",
+      "Highwayman",
+      "Jester",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "L'Inferno",
+    "heroes": [
+      "Plague Doctor",
+      "Duelist",
+      "Crusader",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Zealous Conscripts",
+    "heroes": [
+      "Vestal",
+      "Duelist",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Executors",
+    "heroes": [
+      "Duelist",
+      "Occultist",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": "All 4 characters make use of the execution attribute."
+  },
+  {
+    "name": "Trouble",
+    "heroes": [
+      "Highwayman",
+      "Leper",
+      "Hellion",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Feather Step",
+    "heroes": [
+      "Grave Robber",
+      "Duelist",
+      "Highwayman",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Joyous Madness",
+    "heroes": [
+      "Jester",
+      "Flagellant",
+      "Hellion",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Corps-à-corpse",
+    "heroes": [
+      "Plague Doctor",
+      "Duelist",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": "A play on 'Corps-a-corps,' a fencing term in which the bodies of the fencers collide with one another."
+  },
+  {
+    "name": "Point and Shoot",
+    "heroes": [
+      "Man-at-Arms",
+      "Duelist",
+      "Highwayman",
+      "Leper"
+    ],
+    "note": "Man-at-Arms and Leper can point with Command and Intimidate respectively. Duelist and Highwayman can shoot."
+  },
+  {
+    "name": "Caped crusaders",
+    "heroes": [
+      "Duelist",
+      "Runaway",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Army of the Night",
+    "heroes": [
+      "Vestal",
+      "Crusader",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Deja Coup",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": "A play on \"Deja Vu\", with the Highwayman swapped out for the Duelist."
+  },
+  {
+    "name": "Fire Fighters",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": "All 4 characters make use of burn."
+  },
+  {
+    "name": "Withered Harvest",
+    "heroes": [
+      "Runaway",
+      "Jester",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Farm Hands",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "King's Gambit",
+    "heroes": [
+      "Man-at-Arms",
+      "Crusader",
+      "Vestal",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Vendetta",
+    "heroes": [
+      "Occultist",
+      "Highwayman",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Lords of Light",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "All four characters follow the Light."
+  },
+  {
+    "name": "Swan Song",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Light and Dark",
+    "heroes": [
+      "Vestal",
+      "Occultist",
+      "Crusader",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Cleansing Flame",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Crusader",
+      "Runaway"
+    ],
+    "note": "All 4 characters make use of abilities that apply burn and abilities that heal."
+  },
+  {
+    "name": "Friendly fire",
+    "heroes": [
+      "Runaway",
+      "Vestal",
+      "Crusader",
+      "Occultist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "All the Kings Men",
+    "heroes": [
+      "Man-at-Arms",
+      "Duelist",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "Leper is the king, and the other three characters are his men (and woman)."
+  },
+  {
+    "name": "Restorative Faith",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Under the Surface",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "All of the present characters have mask over their faces."
+  },
+  {
+    "name": "Top of the Class",
+    "heroes": [
+      "Duelist",
+      "Highwayman",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Odd One Out",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Crusader",
+      "Flagellant"
+    ],
+    "note": "The Occultist is the only party member who does not follow The Light."
+  },
+  {
+    "name": "Untouchables",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Runaway"
+    ],
+    "note": "All four characters can gain Dodge or Stealth tokens to avoid being hit."
+  },
+  {
+    "name": "Unstoppable Force",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Duelist",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Quick Recovery",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Occultist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Newcomers",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Duelist",
+      "Crusader"
+    ],
+    "note": "These four characters were not part of the original nine characters added to the game."
+  },
+  {
+    "name": "Thieves' Den",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Full Coffers",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Crusader",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Skin Of Steel",
+    "heroes": [
+      "Vestal",
+      "Man-at-Arms",
+      "Leper",
+      "Crusader"
+    ],
+    "note": "Everyone here wears a lot of body armor"
+  },
+  {
+    "name": "Fools and Corpses",
+    "heroes": [
+      "Highwayman",
+      "Jester",
+      "Crusader",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Danse Macabre",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Highwayman",
+      "Duelist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Last Supper",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Leper",
+      "Crusader"
+    ],
+    "note": "Reference to the Last Supper from the Bible."
+  },
+  {
+    "name": "The Immortal King",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "Everyone on this team has healing abilities to make the Leper (a former king)immortal"
+  },
+  {
+    "name": "Black Death",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Plague and Piety",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Holy Orders",
+    "heroes": [
+      "Crusader",
+      "Highwayman",
+      "Vestal",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Heretical Power",
+    "heroes": [
+      "Occultist",
+      "Hellion",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "La Petite Mort",
+    "heroes": [
+      "Grave Robber",
+      "Vestal",
+      "Duelist",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Vision",
+    "heroes": [
+      "Leper",
+      "Hellion",
+      "Crusader",
+      "Vestal"
+    ],
+    "note": "All characters in this party have the option to remove and/or ignore Blindness tokens. Vestal's ability to do this is through the Confessor path."
+  },
+  {
+    "name": "Vade Retro Satana",
+    "heroes": [
+      "Vestal",
+      "Man-at-Arms",
+      "Occultist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Skewered",
+    "heroes": [
+      "Vestal",
+      "Duelist",
+      "Crusader",
+      "Grave Robber"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Mockers",
+    "heroes": [
+      "Duelist",
+      "Flagellant",
+      "Man-at-Arms",
+      "Hellion"
+    ],
+    "note": "All four characters insult, yell at, or belittle their enemies in some way."
+  },
+  {
+    "name": "Binding Blades",
+    "heroes": [
+      "Duelist",
+      "Occultist",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "A reference to the DLC of the same name."
+  },
+  {
+    "name": "Snake Oil",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Hellion",
+      "Crusader"
+    ],
+    "note": "Snake oil was a common scam medicine in the 19th century United States. All of these characters didn't get what they bargained for in their Shrines of Reflection."
+  },
+  {
+    "name": "The Phalanx",
+    "heroes": [
+      "Grave Robber",
+      "Vestal",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": "Reference to the ancient Greek battle tactic. Vestal and Man-at-arms protects the jabbing Duelist and Grave robber."
+  },
+  {
+    "name": "Family Swordsman",
+    "heroes": [
+      "Highwayman",
+      "Crusader",
+      "Grave Robber",
+      "Runaway"
+    ],
+    "note": "References the Family Guy show, assuming that somehow Crusader acts as Peter Griffin."
+  },
+  {
+    "name": "Game of Shadows",
+    "heroes": [
+      "Leper",
+      "Runaway",
+      "Grave Robber",
+      "Duelist"
+    ],
+    "note": "References the Robert Downey Jr.'s Sherlock Holmes movie sequel. All damage goes towards Leper's Ruin, and initially Intrepede Duelist for When missed bonuses, via use of Stealth skills."
+  },
+  {
+    "name": "Twist and Shout",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "On the New Road",
+    "heroes": [
+      "Runaway",
+      "Duelist",
+      "Highwayman",
+      "Crusader"
+    ],
+    "note": "A reference to the Old Road from the first game. Your starting characters were the Highwayman and the Crusader there. The Runaway and the Duelist are specific to the second game, making the Old Road â€œnew.â€"
+  },
+  {
+    "name": "Kingsguard",
+    "heroes": [
+      "Man-at-Arms",
+      "Duelist",
+      "Leper",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Born from Blood",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman",
+      "Duelist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Alors On Danse",
+    "heroes": [
+      "Jester",
+      "Grave Robber",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": "French for \"So We Dance\", this team moves around a significant amount, which is considered \"dancing\""
+  },
+  {
+    "name": "Ballroom Blitz",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Crusader"
+    ],
+    "note": "This team moves around a significant amount, like how you would do in a Ballroom"
+  },
+  {
+    "name": "Teacher's Pet",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Duelist",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "St. Martha's Reunion",
+    "heroes": [
+      "Crusader",
+      "Runaway",
+      "Vestal",
+      "Flagellant"
+    ],
+    "note": "A reference to the Church of St. Martha, which Runaway, Vestal, and Flagellant are related to."
+  },
+  {
+    "name": "Detention",
+    "heroes": [
+      "Jester",
+      "Plague Doctor",
+      "Duelist",
+      "Occultist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Excommunication",
+    "heroes": [
+      "Flagellant",
+      "Crusader",
+      "Vestal",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Inhuman Bondage",
+    "heroes": [
+      "Vestal",
+      "Crusader",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Boys Don't Cry",
+    "heroes": [
+      "Highwayman",
+      "Abomination",
+      "Bounty Hunter",
+      "Crusader"
+    ],
+    "note": "A reference to Boys Don't Cry by The Cure."
+  },
+  {
+    "name": "Emergency Room",
+    "heroes": [
+      "Plague Doctor",
+      "Abomination",
+      "Flagellant",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Foolish Horrors",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Four Horsemen",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Crime and Punishment",
+    "heroes": [
+      "Vestal",
+      "Highwayman",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blessed &Possessed",
+    "heroes": [
+      "Occultist",
+      "Vestal",
+      "Abomination",
+      "Crusader"
+    ],
+    "note": "Crusader and Vestal are blessed by their religion, while Occultist and Abomination are \"possessed\", Occultist by the Shambler in his mind, and Abomination by the monster he can transform into"
+  },
+  {
+    "name": "Guard Dog",
+    "heroes": [
+      "Grave Robber",
+      "Duelist",
+      "Leper",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Unchained",
+    "heroes": [
+      "Runaway",
+      "Bounty Hunter",
+      "Highwayman",
+      "Abomination"
+    ],
+    "note": "All characters experience a type of freedom. The Runaway, the Abomination, and the Highwayman in a literal sense, while the Bounty Hunter experiences it through his profession."
+  },
+  {
+    "name": "Let There Be Blight",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": "Everyone in this team applies a significant amount of Blight"
+  },
+  {
+    "name": "The Lurking Fear",
+    "heroes": [
+      "Runaway",
+      "Grave Robber",
+      "Occultist",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Heavy Metal",
+    "heroes": [
+      "Crusader",
+      "Man-at-Arms",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": "A double entendre. These characters all scream at the enemies, like a heavy metal band would, and all use heavy weaponry made out of metal."
+  },
+  {
+    "name": "Unfettered Emotions",
+    "heroes": [
+      "Vestal",
+      "Jester",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Masquerade",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Bounty Hunter",
+      "Leper"
+    ],
+    "note": "Everyone in this team is wearing mask"
+  },
+  {
+    "name": "The Unstable Suspects",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Highwayman",
+      "Abomination"
+    ],
+    "note": "A reference to \"The Unusual Suspects\" with Man at Arms replaced with Abomination"
+  },
+  {
+    "name": "Trauma Bond",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": "The Torturer in the Vestal and the Abomination's Shrines of Reflection is the Flagellant. Runaway previously experienced a similar type of abuse that they endured."
+  },
+  {
+    "name": "Living Weapon",
+    "heroes": [
+      "Duelist",
+      "Plague Doctor",
+      "Flagellant",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Discombobulation",
+    "heroes": [
+      "Jester",
+      "Occultist",
+      "Abomination",
+      "Man-at-Arms"
+    ],
+    "note": "This team pulls and knocks back enemies a lot"
+  },
+  {
+    "name": "Plan And Execution",
+    "heroes": [
+      "Man-at-Arms",
+      "Highwayman",
+      "Bounty Hunter",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Captive Audience",
+    "heroes": [
+      "Jester",
+      "Grave Robber",
+      "Highwayman",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Heretics",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Drunken Horrors",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Chemical Burn",
+    "heroes": [
+      "Plague Doctor",
+      "Abomination",
+      "Runaway",
+      "Crusader"
+    ],
+    "note": "The party makes extensive use of the blight and burn effects."
+  },
+  {
+    "name": "Blind Box",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Abomination",
+      "Leper"
+    ],
+    "note": "All 4 characters have abilities that apply or give the blind effect."
+  },
+  {
+    "name": "Bound and Chained",
+    "heroes": [
+      "Occultist",
+      "Bounty Hunter",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Boldening rage",
+    "heroes": [
+      "Plague Doctor",
+      "Flagellant",
+      "Hellion",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Survivor's Guilt",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Abomination",
+      "Highwayman"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Prison Break",
+    "heroes": [
+      "Vestal",
+      "Runaway",
+      "Highwayman",
+      "Abomination"
+    ],
+    "note": "Everyone in this team escaped from a prison/jail (if you consider Runaway's orphanage to be a kind of prison)"
+  },
+  {
+    "name": "Crash &Burn",
+    "heroes": [
+      "Runaway",
+      "Abomination",
+      "Crusader",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Cruel Fate",
+    "heroes": [
+      "Runaway",
+      "Abomination",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Misery’s Choir",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Crusader",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Death and Taxes",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Bounty Hunter",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Holy Persecution",
+    "heroes": [
+      "Vestal",
+      "Flagellant",
+      "Crusader",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blood and Bile",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": "Jester and Hellion excel in Bleed, while Plague Doctor and Abomination excel in Blight"
+  },
+  {
+    "name": "Twice be Damned, Thrice...",
+    "heroes": [
+      "Plague Doctor",
+      "Vestal",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Outsiders Bonfire",
+    "heroes": [
+      "Runaway",
+      "Abomination",
+      "Hellion",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Corpse Eaters",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Abomination",
+      "Leper"
+    ],
+    "note": "Everyone in this team has an ability with the \"clear corpse\" effect"
+  },
+  {
+    "name": "Out Casts",
+    "heroes": [
+      "Runaway",
+      "Occultist",
+      "Abomination",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Apostate",
+    "heroes": [
+      "Vestal",
+      "Abomination",
+      "Flagellant",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Viscera and Visage",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Bounty Hunter",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Professionally Unprofessional",
+    "heroes": [
+      "Occultist",
+      "Duelist",
+      "Highwayman",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Understaffed",
+    "heroes": [
+      "Plague Doctor",
+      "Abomination",
+      "Flagellant",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Howling Moon",
+    "heroes": [
+      "Man-at-Arms",
+      "Duelist",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": "This team \"howls\" by having many abilities that cause them to shout at allies or enemies"
+  },
+  {
+    "name": "Dead or Alive",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Bounty Hunter",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Night Watch",
+    "heroes": [
+      "Runaway",
+      "Bounty Hunter",
+      "Grave Robber",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Bitter Domain",
+    "heroes": [
+      "Grave Robber",
+      "Plague Doctor",
+      "Abomination",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Categorized",
+    "heroes": [
+      "Duelist",
+      "Crusader",
+      "Bounty Hunter",
+      "Abomination"
+    ],
+    "note": "This team is in alphabetical order going \"A,B,C,D\""
+  },
+  {
+    "name": "Cry Havoc",
+    "heroes": [
+      "Man-at-Arms",
+      "Crusader",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": "These characters all have skills where they “cry havoc” at the enemies."
+  },
+  {
+    "name": "Soldiers of Fortune",
+    "heroes": [
+      "Man-at-Arms",
+      "Highwayman",
+      "Crusader",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Strong Stomachs",
+    "heroes": [
+      "Plague Doctor",
+      "Bounty Hunter",
+      "Abomination",
+      "Flagellant"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Unholy Crusade",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Dragon's Breath",
+    "heroes": [
+      "Runaway",
+      "Duelist",
+      "Crusader",
+      "Man-at-Arms"
+    ],
+    "note": "Crusader and Runaway both have abilities that cause fire effect. But the name itself comes from the capacity of “breathing fire” on every enemy, this is done by using Firestarter + Preparation + Again! + Firestarter + Bellow (Upgraded on Bulwark path); following this process you gain the ability to \"breathe fire\" on enemies without cooldown by spamming Bellow."
+  },
+  {
+    "name": "The Black Death",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Flagellant",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Obliterate Body",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Bounty Hunter",
+      "Abomination"
+    ],
+    "note": "All characters make use of the Execution mechanic. Abomination's Execution skill is accessed through the Fiend path."
+  },
+  {
+    "name": "Intimidation Tacticians",
+    "heroes": [
+      "Grave Robber",
+      "Abomination",
+      "Bounty Hunter",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Rough Labels",
+    "heroes": [
+      "Abomination",
+      "Runaway",
+      "Occultist",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Steeled Veterans",
+    "heroes": [
+      "Vestal",
+      "Bounty Hunter",
+      "Man-at-Arms",
+      "Crusader"
+    ],
+    "note": "Reference of the Helldivers 2 Warbond of the same name \"Steeled Veterans\""
+  },
+  {
+    "name": "Mercy Massacres",
+    "heroes": [
+      "Crusader",
+      "Jester",
+      "Abomination",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Forward March",
+    "heroes": [
+      "Grave Robber",
+      "Abomination",
+      "Duelist",
+      "Man-at-Arms"
+    ],
+    "note": "All characters in this party have a skill that can put them into the higher ranks."
+  },
+  {
+    "name": "The Unusual Bounty",
+    "heroes": [
+      "Plague Doctor",
+      "Grave Robber",
+      "Bounty Hunter",
+      "Man-at-Arms"
+    ],
+    "note": "A reference to \"The Unusual Suspects\", this team has the same composition with Highwayman replaced with the Bounty Hunter"
+  },
+  {
+    "name": "Marked for Death",
+    "heroes": [
+      "Occultist",
+      "Bounty Hunter",
+      "Flagellant",
+      "Highwayman"
+    ],
+    "note": "A reference to the Bounty Hunter's skill. The rest of the character's have been â€œmarked for deathâ€ in some way. The Occultist with the Shambler, the Flagellant with Death herself, and the Highwayman for escaping prison."
+  },
+  {
+    "name": "Group Therapy",
+    "heroes": [
+      "Jester",
+      "Man-at-Arms",
+      "Crusader",
+      "Abomination"
+    ],
+    "note": "Every character in this party has an ability that recovers stress damage."
+  },
+  {
+    "name": "Study Group",
+    "heroes": [
+      "Plague Doctor",
+      "Occultist",
+      "Duelist",
+      "Abomination"
+    ],
+    "note": "All of these characters were once scholars."
+  },
+  {
+    "name": "Rare Specimens",
+    "heroes": [
+      "Plague Doctor",
+      "Flagellant",
+      "Abomination",
+      "Leper"
+    ],
+    "note": "Three of these characters have a rare affliction that the Plague Doctor would want to study."
+  },
+  {
+    "name": "Memento Mori",
+    "heroes": [
+      "Grave Robber",
+      "Occultist",
+      "Jester",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Get Over Here",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Abomination",
+      "Bounty Hunter"
+    ],
+    "note": "A reference to the iconic phrase from Mortal Kombat's \"Scorpion\", this team excels at pulling their enemies towards them"
+  },
+  {
+    "name": "Cirque du Freak",
+    "heroes": [
+      "Occultist",
+      "Flagellant",
+      "Abomination",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Black Sheep",
+    "heroes": [
+      "Vestal",
+      "Abomination",
+      "Crusader",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Outsiders",
+    "heroes": [
+      "Runaway",
+      "Abomination",
+      "Leper",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Prefect and Kind",
+    "heroes": [
+      "Duelist",
+      "Jester",
+      "Flagellant",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Wolf Pack",
+    "heroes": [
+      "Bounty Hunter",
+      "Highwayman",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "By Night",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Runaway",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Beauty and Beast",
+    "heroes": [
+      "Grave Robber",
+      "Runaway",
+      "Abomination",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Moundmakers",
+    "heroes": [
+      "Highwayman",
+      "Abomination",
+      "Jester",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Fence",
+    "heroes": [
+      "Vestal",
+      "Duelist",
+      "Crusader",
+      "Leper"
+    ],
+    "note": "A reference to the team The Wall, but with Man-At-Arms replaced with a much more fragile unit in the form of Duelist, making \"The Wall\" much more fragile and easy to get through. Duelist herself is also a Fencer"
+  },
+  {
+    "name": "L'usine Ã  Combos",
+    "heroes": [
+      "Man-at-Arms",
+      "Jester",
+      "Bounty Hunter",
+      "Highwayman"
+    ],
+    "note": "French for \"The Combo Factory\", everyone in this team can apply and use a significant amount of Combo tokens"
+  },
+  {
+    "name": "Hook &Claw",
+    "heroes": [
+      "Occultist",
+      "Runaway",
+      "Bounty Hunter",
+      "Abomination"
+    ],
+    "note": "The Occultist, Runaway, and Bounty Hunter all have skills that can hook enemies closer for the Abomination to claw into."
+  },
+  {
+    "name": "Autarky",
+    "heroes": [
+      "Grave Robber",
+      "Abomination",
+      "Leper",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Algophilists",
+    "heroes": [
+      "Plague Doctor",
+      "Jester",
+      "Flagellant",
+      "Duelist"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Los Toreros",
+    "heroes": [
+      "Abomination",
+      "Jester",
+      "Duelist",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Wergeld",
+    "heroes": [
+      "Bounty Hunter",
+      "Plague Doctor",
+      "Highwayman",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Tetra Maledictus",
+    "heroes": [
+      "Plague Doctor",
+      "Abomination",
+      "Runaway",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Damenhunde",
+    "heroes": [
+      "Grave Robber",
+      "Man-at-Arms",
+      "Duelist",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Metamorphosis",
+    "heroes": [
+      "Occultist",
+      "Duelist",
+      "Flagellant",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Photophobia",
+    "heroes": [
+      "Vestal",
+      "Occultist",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Penitent Few",
+    "heroes": [
+      "Vestal",
+      "Occultist",
+      "Abomination",
+      "Leper"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Night Shift",
+    "heroes": [
+      "Bounty Hunter",
+      "Highwayman",
+      "Abomination",
+      "Man-at-Arms"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Artemis &Actaeon",
+    "heroes": [
+      "Runaway",
+      "Highwayman",
+      "Abomination",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Professionals",
+    "heroes": [
+      "Grave Robber",
+      "Highwayman",
+      "Duelist",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Steel &Fang",
+    "heroes": [
+      "Vestal",
+      "Abomination",
+      "Bounty Hunter",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Push and Pull",
+    "heroes": [
+      "Occultist",
+      "Plague Doctor",
+      "Abomination",
+      "Bounty Hunter"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Blinding Rage",
+    "heroes": [
+      "Plague Doctor",
+      "Runaway",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Standard Bearer",
+    "heroes": [
+      "Highwayman",
+      "Grave Robber",
+      "Occultist",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Tout Suite",
+    "heroes": [
+      "Grave Robber",
+      "Jester",
+      "Duelist",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Through the Woods",
+    "heroes": [
+      "Bounty Hunter",
+      "Abomination",
+      "Vestal",
+      "Runaway"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Profane Crucible",
+    "heroes": [
+      "Occultist",
+      "Jester",
+      "Flagellant",
+      "Abomination"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Binding Bondage",
+    "heroes": [
+      "Vestal",
+      "Duelist",
+      "Abomination",
+      "Crusader"
+    ],
+    "note": ""
+  },
+  {
+    "name": "The Hunting Party",
+    "heroes": [
+      "Highwayman",
+      "Bounty Hunter",
+      "Abomination",
+      "Hellion"
+    ],
+    "note": ""
+  },
+  {
+    "name": "Intensive Therapy",
+    "heroes": [
+      "Vestal",
+      "Plague Doctor",
+      "Jester",
+      "Abomination"
+    ],
+    "note": "All of the characters beyond Row 1 benefit the Abomination in some way, with the Vestal and Plague Doctor giving him intensive care, and the Jester giving him therapy . The Abomination may or may not also be the reason it is intensive."
+  }
+        
+	  
+    ];
+
+
+    const selects = document.querySelectorAll(".hero-select");
+    const locks = document.querySelectorAll(".lock-checkbox");
+    const lockAll = document.getElementById("lock-all");
+    const resultsDiv = document.getElementById("results");
+
+    
+
+    selects.forEach(select => {
+      const anyOption = document.createElement("option");
+      anyOption.value = "";
+      anyOption.textContent = "-- Any --";
+      select.appendChild(anyOption);
+
+      heroes.forEach(hero => {
+        const option = document.createElement("option");
+        option.value = hero;
+        option.textContent = hero;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", updateResults);
+    });
+
+    locks.forEach(lock => {
+      lock.addEventListener("change", updateResults);
+    });
+
+    lockAll.addEventListener("change", () => {
+      locks.forEach(lock => {
+        lock.checked = lockAll.checked;
+      });
+      updateResults();
+    });
+
+    
+
+    function updateResults() {
+      const selected = Array.from(selects, s => s.value);
+      const locked = Array.from(locks, l => l.checked);
+
+      resultsDiv.innerHTML = "";
+
+      const matches = teamComps.filter(comp => {
+        for (let i = 0; i < selected.length; i++) {
+          if (!selected[i]) continue;
+
+          if (locked[i] && comp.heroes[i] !== selected[i]) {
+            return false;
+          }
+
+          if (!locked[i] && !comp.heroes.includes(selected[i])) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (matches.length === 0) {
+        resultsDiv.textContent = "No matching team compositions.";
+        return;
+      }
+
+      matches.forEach(comp => {
+        const div = document.createElement("div");
+        div.className = "comp";
+
+        const heroesHtml = comp.heroes
+          .map(hero => `
+            <img
+              src="${heroImages[hero]}"
+              alt="${hero}"
+              title="${hero}"
+              class="hero-icon"
+            >
+          `)
+          .join("");
+
+
+	
+		div.innerHTML = `
+		  <div class="comp-content">
+		  <div class="comp-left">
+			<div class="comp-name">${comp.name}</div>
+			<div class="comp-heroes">
+			  ${heroesHtml}
+			</div>
+		  </div>
+		  ${comp.note ? `<div class="comp-note">${comp.note}</div>` : ''}
+		  </div>
+		`;
+
+		resultsDiv.appendChild(div);
+      });
+    }
+	
+    updateResults();
+  </script>
+</body>
+</html>
